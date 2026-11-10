@@ -41,7 +41,6 @@ export class CaptureModal extends Modal {
       )
       .addButton((b) =>
         b.setButtonText("Отмена").onClick(() => {
-          this.resolveFn?.([]);
           this.close();
         })
       );
@@ -52,11 +51,17 @@ export class CaptureModal extends Modal {
       .split("\n")
       .map((s) => s.trim())
       .filter((s) => s.length > 0);
-    this.resolveFn?.(lines);
+    const fn = this.resolveFn;
+    this.resolveFn = undefined;
+    fn?.(lines);
     this.close();
   }
 
   onClose() {
+    if (this.resolveFn) {
+      this.resolveFn([]);
+      this.resolveFn = undefined;
+    }
     const { contentEl } = this;
     contentEl.empty();
   }
