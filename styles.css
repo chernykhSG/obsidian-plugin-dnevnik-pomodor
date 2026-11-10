@@ -1,0 +1,32 @@
+.dp-timer-view {
+  padding: 8px;
+}
+.dp-timer-view .dp-mode {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.dp-timer-view .dp-time {
+  font-size: 2.2em;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 8px;
+}
+.dp-timer-view .dp-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.dp-timer-view input[type="number"] {
+  width: 52px;
+}
+.dp-timer-view button {
+  margin-right: 4px;
+}
+.dp-stats-month {
+  font-weight: 600;
+  margin: 8px 0;
+}
+.dp-total {
+  font-weight: 700;
+}

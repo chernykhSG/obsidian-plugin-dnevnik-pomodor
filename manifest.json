@@ -1,0 +1,9 @@
+{
+  "id": "dnevnik-pomodoro",
+  "name": "Дневник помодоро",
+  "version": "1.0.0",
+  "minAppVersion": "1.4.0",
+  "description": "Помодоро-таймер с авто-сводками в ежедневную заметку и статистикой.",
+  "author": "",
+  "isDesktopOnly": false
+}
