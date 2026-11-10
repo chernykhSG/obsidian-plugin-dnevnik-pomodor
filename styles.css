@@ -22,6 +22,32 @@
 }
 .dp-timer-view button {
   margin-right: 4px;
+  padding: 4px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s, 4px);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.4;
+}
+.dp-timer-view button:hover {
+  background: var(--background-modifier-hover);
+}
+.dp-timer-view button:active {
+  background: var(--background-modifier-active-hover);
+}
+.dp-timer-view button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.dp-timer-view .dp-primary {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.dp-timer-view .dp-primary:hover {
+  background: var(--interactive-accent-hover);
 }
 .dp-stats-month {
   font-weight: 600;

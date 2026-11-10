@@ -9,6 +9,7 @@ export class TimerView extends ItemView {
   private modeEl!: HTMLElement;
   private workInput!: HTMLInputElement;
   private breakInput!: HTMLInputElement;
+  private startBtn!: HTMLButtonElement;
 
   constructor(leaf: WorkspaceLeaf, plugin: DnevnikPomodoro) {
     super(leaf);
@@ -43,12 +44,14 @@ export class TimerView extends ItemView {
     this.breakInput.addEventListener("change", () => this.applyDurations());
 
     const btns = c.createDiv({ cls: "dp-row" });
-    const startBtn = btns.createEl("button", { text: "Старт" });
+    this.startBtn = btns.createEl("button", { text: "Старт", cls: "dp-primary" });
     const pauseBtn = btns.createEl("button", { text: "Пауза" });
     const stopBtn = btns.createEl("button", { text: "Стоп" });
-    startBtn.addEventListener("click", () => this.plugin.timer.start());
+    const skipBtn = btns.createEl("button", { text: "Пропустить" });
+    this.startBtn.addEventListener("click", () => this.plugin.timer.start());
     pauseBtn.addEventListener("click", () => this.plugin.timer.pause());
     stopBtn.addEventListener("click", () => this.plugin.timer.stop());
+    skipBtn.addEventListener("click", () => this.plugin.timer.skip());
 
     this.render();
   }
@@ -61,6 +64,7 @@ export class TimerView extends ItemView {
     const editable = t.state === "stopped";
     this.workInput.disabled = !editable;
     this.breakInput.disabled = !editable;
+    this.startBtn.setText(t.state === "paused" ? "Продолжить" : "Старт");
   }
 
   private applyDurations() {

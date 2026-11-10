@@ -75,6 +75,20 @@ export class PomodoroTimer {
     this.cb.onTick();
   }
 
+  // Пропустить текущий интервал: сразу перейти к следующему режиму
+  // (работа <-> перерыв) без запуска и без вызова onWorkFinished.
+  skip() {
+    if (this.interval !== null) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
+    this.state = "stopped";
+    this.mode = this.mode === "work" ? "break" : "work";
+    this.durationSec = (this.mode === "work" ? this.workMinutes : this.breakMinutes) * 60;
+    this.remainingMs = this.durationSec * 1000;
+    this.cb.onTick();
+  }
+
   // Момент запуска текущего рабочего интервала (настенные часы).
   get wallStart(): Date {
     return new Date(this.startedAt);
