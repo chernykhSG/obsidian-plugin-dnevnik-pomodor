@@ -1,16 +1,13 @@
-import { App, Modal, Setting, moment } from "obsidian";
+import { App, Modal, Setting } from "obsidian";
 import type DnevnikPomodoro from "./main";
 import { aggregateStats } from "./core";
-
-// Obsidian ре-экспортирует moment как namespace-тип (typeof Moment), а не callable-функцию,
-// из-за чего строгий tsc не даёт вызывать moment(). Приводим к callable-типу moment-пакета
-// (доступен транзитивно через obsidian). Аналогично daily.ts.
-const momentFn = moment as unknown as typeof import("moment");
+import { momentFn } from "./moment";
 
 export class StatsModal extends Modal {
   plugin: DnevnikPomodoro;
   private cursor = momentFn().startOf("month");
   private bodyEl!: HTMLElement;
+  private renderGen = 0;
 
   constructor(app: App, plugin: DnevnikPomodoro) {
     super(app);
@@ -31,20 +28,25 @@ export class StatsModal extends Modal {
   }
 
   private async render() {
+    const gen = ++this.renderGen;
     this.bodyEl.empty();
     const settings = this.plugin.settings;
     const month = this.cursor.format("YYYY-MM");
     this.bodyEl.createEl("div", { text: this.cursor.format("MMMM YYYY"), cls: "dp-stats-month" });
 
-    const files = this.plugin.app.vault
+    const fmt = settings.dailyNameFormat;
+    const matched = this.plugin.app.vault
       .getMarkdownFiles()
-      .filter((f) => f.path.startsWith(settings.dailyFolder + "/") && f.basename.startsWith(month))
-      .sort((a, b) => a.basename.localeCompare(b.basename));
+      .filter((f) => f.path.startsWith(settings.dailyFolder + "/"))
+      .map((f) => ({ f, date: momentFn(f.basename, fmt, true) }))
+      .filter((x) => x.date.isValid() && x.date.format("YYYY-MM") === month)
+      .sort((a, b) => a.date.valueOf() - b.date.valueOf());
 
     const days: { day: string; content: string }[] = [];
-    for (const f of files) {
-      days.push({ day: f.basename, content: await this.plugin.app.vault.cachedRead(f) });
+    for (const x of matched) {
+      days.push({ day: x.date.format("YYYY-MM-DD"), content: await this.plugin.app.vault.cachedRead(x.f) });
     }
+    if (gen !== this.renderGen) return;
     const stats = aggregateStats(days);
 
     const table = this.bodyEl.createEl("table");

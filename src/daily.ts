@@ -1,11 +1,7 @@
-import { TFile, moment } from "obsidian";
+import { TFile } from "obsidian";
 import type DnevnikPomodoro from "./main";
 import { computeStartTime, formatPomodoroBlock, parseLastBlockEnd, parseHHmmToDate } from "./core";
-
-// Obsidian ре-экспортирует moment как namespace-тип (typeof Moment), а не callable-функцию,
-// из-за чего строгий tsc не даёт вызывать moment(). Приводим к callable-типу moment-пакета
-// (доступен транзитивно через obsidian).
-const momentFn = moment as unknown as typeof import("moment");
+import { momentFn } from "./moment";
 
 // Дописывает блок помодоро в сегодняшнюю заметку; создаёт заметку по шаблону, если её нет.
 export async function appendPomodoroBlock(plugin: DnevnikPomodoro, actualStart: Date, lines: string[]): Promise<void> {
