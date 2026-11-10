@@ -103,13 +103,14 @@ export class PomodoroTimer {
       this.interval = null;
     }
     this.state = "stopped";
-    this.remainingMs = this.durationSec * 1000;
     if (this.mode === "work") {
       this.mode = "break";
       this.cb.onWorkFinished();
     } else {
       this.mode = "work";
     }
+    this.durationSec = (this.mode === "work" ? this.workMinutes : this.breakMinutes) * 60;
+    this.remainingMs = this.durationSec * 1000;
     this.cb.onTick();
   }
 }
