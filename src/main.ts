@@ -12,6 +12,7 @@ export default class DnevnikPomodoro extends Plugin {
   timerView: TimerView | null = null;
   private audioCtx: AudioContext | null = null;
   private statusBarEl: HTMLElement | null = null;
+  private workJustFinished = false;
 
   async onload() {
     await this.loadSettings();
@@ -36,6 +37,7 @@ export default class DnevnikPomodoro extends Plugin {
 
   onunload() {
     this.timer?.stop();
+    this.audioCtx?.close();
   }
 
   async loadSettings() {
@@ -62,6 +64,7 @@ export default class DnevnikPomodoro extends Plugin {
   }
 
   private async handleWorkFinished() {
+    this.workJustFinished = true;
     if (this.settings.sound) this.playBeep();
     if (this.settings.notification) {
       try {
@@ -94,17 +97,26 @@ export default class DnevnikPomodoro extends Plugin {
   private async openCapture(actualStart: Date) {
     const modal = new CaptureModal(this.app, this);
     const lines = await modal.openAndWait();
+    let wrote = false;
     if (lines && lines.length) {
       try {
         await appendPomodoroBlock(this, actualStart, lines);
         new Notice("Сводка записана");
+        wrote = true;
       } catch (e) {
         new Notice("Не удалось записать сводку: " + (e as Error).message);
       }
-      if (this.settings.autoBreak && this.timer.state === "stopped" && this.timer.mode === "break") {
-        this.timer.start();
-      }
     }
+    if (
+      wrote &&
+      this.settings.autoBreak &&
+      this.workJustFinished &&
+      this.timer.state === "stopped" &&
+      this.timer.mode === "break"
+    ) {
+      this.timer.start();
+    }
+    this.workJustFinished = false;
   }
 
   private updateTimerUI() {
