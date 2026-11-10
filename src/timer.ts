@@ -25,11 +25,12 @@ export class PomodoroTimer {
     this.cb = cb;
   }
 
-  // Изменить длительности можно только в состоянии «остановлен».
+  // Длительности обновляются всегда (подхватятся при следующем старте);
+  // текущий идущий/пауза-интервал не трогаем.
   setDurations(work: number, br: number) {
-    if (this.state !== "stopped") return;
     this.workMinutes = Math.max(1, work);
     this.breakMinutes = Math.max(0, br);
+    if (this.state !== "stopped") return;
     this.durationSec = (this.mode === "work" ? this.workMinutes : this.breakMinutes) * 60;
     this.remainingMs = this.durationSec * 1000;
     this.cb.onTick();
