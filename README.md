@@ -115,7 +115,3 @@ npm run build  # tsc + esbuild production + копирование в тесто
 сводка, `src/confirm-modal.ts` — вопрос после перерыва, `src/daily.ts` — запись
 в ежедневную заметку, `src/core.ts` — парсинг/статистика блоков,
 `src/stats-modal.ts` — статистика.
-
-## Лицензия
-
-MIT
