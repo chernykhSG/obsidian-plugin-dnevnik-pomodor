@@ -1,5 +1,6 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
 import type DnevnikPomodoro from "./main";
+import { StatsModal } from "./stats-modal";
 
 export const TIMER_VIEW_TYPE = "dnevnik-pomodoro-timer";
 
@@ -59,6 +60,10 @@ export class TimerView extends ItemView {
     this.pauseBtn.addEventListener("click", () => this.plugin.timer.pause());
     this.stopBtn.addEventListener("click", () => this.plugin.timer.stop());
     this.skipBtn.addEventListener("click", () => this.plugin.timer.skip());
+
+    const extra = c.createDiv({ cls: "dp-row" });
+    const statsBtn = extra.createEl("button", { text: "📊 Статистика" });
+    statsBtn.addEventListener("click", () => new StatsModal(this.plugin.app, this.plugin).open());
 
     this.render();
   }
