@@ -66,6 +66,13 @@ export default class DnevnikPomodoro extends Plugin {
   private async handleWorkFinished() {
     this.workJustFinished = true;
     if (this.settings.sound) this.playBeep();
+    if (this.settings.focusOnFinish) {
+      try {
+        window.focus();
+      } catch (e) {
+        // фокус недоступен — не критично
+      }
+    }
     if (this.settings.notification) {
       try {
         new Notification("Помодоро завершён", { body: "Время записать сводку" });
@@ -80,15 +87,32 @@ export default class DnevnikPomodoro extends Plugin {
     try {
       if (!this.audioCtx) this.audioCtx = new AudioContext();
       const ctx = this.audioCtx;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.2, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.5);
+      if (this.settings.soundType === "long") {
+        // Продолжительный сигнал: тройной тон с паузами (~1.2 с).
+        [0, 450, 900].forEach((delay) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = "square";
+          osc.frequency.value = 880;
+          const t = ctx.currentTime + delay / 1000;
+          gain.gain.setValueAtTime(0.15, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+          osc.start(t);
+          osc.stop(t + 0.35);
+        });
+      } else {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.5);
+      }
     } catch (e) {
       // звук недоступен — не критично
     }

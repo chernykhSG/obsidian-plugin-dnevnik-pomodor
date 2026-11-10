@@ -5,7 +5,9 @@ export interface DnevnikSettings {
   workMinutes: number;
   breakMinutes: number;
   sound: boolean;
+  soundType: "short" | "long";
   notification: boolean;
+  focusOnFinish: boolean;
   autoBreak: boolean;
   dailyFolder: string;
   dailyNameFormat: string;
@@ -16,7 +18,9 @@ export const DEFAULT_SETTINGS: DnevnikSettings = {
   workMinutes: 30,
   breakMinutes: 5,
   sound: true,
+  soundType: "short",
   notification: true,
+  focusOnFinish: true,
   autoBreak: true,
   dailyFolder: "Ежедневник",
   dailyNameFormat: "YYYY-MM-DD",
@@ -66,10 +70,33 @@ export class DnevnikSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
+      .setName("Звук уведомления")
+      .addDropdown((d) =>
+        d
+          .addOption("short", "Короткий")
+          .addOption("long", "Продолжительный")
+          .setValue(this.plugin.settings.soundType)
+          .onChange(async (v) => {
+            this.plugin.settings.soundType = v as "short" | "long";
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
       .setName("Системное уведомление")
       .addToggle((t) =>
         t.setValue(this.plugin.settings.notification).onChange(async (v) => {
           this.plugin.settings.notification = v;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Фокусировать Obsidian по завершении")
+      .setDesc("Переводит окно Obsidian на передний план, чтобы окно сводки было видно")
+      .addToggle((t) =>
+        t.setValue(this.plugin.settings.focusOnFinish).onChange(async (v) => {
+          this.plugin.settings.focusOnFinish = v;
           await this.plugin.saveSettings();
         })
       );
