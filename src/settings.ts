@@ -5,7 +5,7 @@ export interface DnevnikSettings {
   workMinutes: number;
   breakMinutes: number;
   sound: boolean;
-  soundType: "short" | "long";
+  soundType: "short" | "long" | "chime" | "dingdong" | "alarm";
   notification: boolean;
   focusOnFinish: boolean;
   autoBreak: boolean;
@@ -75,9 +75,12 @@ export class DnevnikSettingTab extends PluginSettingTab {
         d
           .addOption("short", "Короткий")
           .addOption("long", "Продолжительный")
+          .addOption("chime", "Мелодия (восходящая)")
+          .addOption("dingdong", "Динь-дон")
+          .addOption("alarm", "Сирена")
           .setValue(this.plugin.settings.soundType)
           .onChange(async (v) => {
-            this.plugin.settings.soundType = v as "short" | "long";
+            this.plugin.settings.soundType = v as DnevnikSettings["soundType"];
             await this.plugin.saveSettings();
           })
       );

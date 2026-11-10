@@ -87,35 +87,53 @@ export default class DnevnikPomodoro extends Plugin {
     try {
       if (!this.audioCtx) this.audioCtx = new AudioContext();
       const ctx = this.audioCtx;
-      if (this.settings.soundType === "long") {
-        // Продолжительный сигнал: тройной тон с паузами (~1.2 с).
-        [0, 450, 900].forEach((delay) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.type = "square";
-          osc.frequency.value = 880;
-          const t = ctx.currentTime + delay / 1000;
-          gain.gain.setValueAtTime(0.15, t);
-          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-          osc.start(t);
-          osc.stop(t + 0.35);
-        });
-      } else {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = 880;
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.5);
+      switch (this.settings.soundType) {
+        case "chime":
+          // Восходящий аккорд: C5, E5, G5 (мягкая синусоида).
+          this.tone(ctx, [523.25, 659.25, 783.99], 0.35, "sine", 0.12);
+          break;
+        case "dingdong":
+          // Динь-дон: два низких тона с долгим затуханием.
+          this.tone(ctx, [659.25, 523.25], 0.7, "sine", 0.14);
+          break;
+        case "alarm":
+          // Сирена: чередование высокого и низкого тона.
+          for (let i = 0; i < 4; i++) {
+            this.beep(ctx, i * 700, 880, 0.25, 0.18, "square");
+            this.beep(ctx, i * 700 + 300, 660, 0.25, 0.18, "square");
+          }
+          break;
+        case "long":
+          // Продолжительный: тройной тон с паузами (~1.2 с).
+          this.tone(ctx, [880, 880, 880], 0.45, "square", 0.15);
+          break;
+        default:
+          // Короткий: одиночный тон (~0.5 с).
+          this.beep(ctx, 0, 880, 0.5, 0.2, "square");
       }
     } catch (e) {
       // звук недоступен — не критично
     }
+  }
+
+  // Один тон заданной частоты и длительности.
+  private beep(ctx: AudioContext, delayMs: number, freq: number, duration: number, volume: number, type: OscillatorType) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.value = freq;
+    const t = ctx.currentTime + delayMs / 1000;
+    gain.gain.setValueAtTime(volume, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    osc.start(t);
+    osc.stop(t + duration + 0.05);
+  }
+
+  // Последовательность тонов с интервалом gap секунд.
+  private tone(ctx: AudioContext, freqs: number[], gap: number, type: OscillatorType, volume: number) {
+    freqs.forEach((f, i) => this.beep(ctx, i * gap * 1000, f, gap * 0.7, volume, type));
   }
 
   private async openCapture(actualStart: Date) {
