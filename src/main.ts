@@ -4,9 +4,9 @@ import { DEFAULT_SETTINGS, type DnevnikSettings } from "./settings";
 export default class DnevnikPomodoro extends Plugin {
   // Заглушки, наполняются в Task 9
   settings: DnevnikSettings = DEFAULT_SETTINGS;
-  timer = {
-    setDurations(_workMinutes: number, _breakMinutes: number) {},
-  };
+  // Заглушка, заменяется реальным PomodoroTimer в Task 9.
+  // Тип `any` — минимальное расширение, чтобы TimerView проходил строгий tsc.
+  timer: any;
   async saveSettings() {}
 
   async onload() {
