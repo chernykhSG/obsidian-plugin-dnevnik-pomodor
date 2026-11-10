@@ -10,6 +10,9 @@ export class TimerView extends ItemView {
   private workInput!: HTMLInputElement;
   private breakInput!: HTMLInputElement;
   private startBtn!: HTMLButtonElement;
+  private pauseBtn!: HTMLButtonElement;
+  private stopBtn!: HTMLButtonElement;
+  private skipBtn!: HTMLButtonElement;
 
   constructor(leaf: WorkspaceLeaf, plugin: DnevnikPomodoro) {
     super(leaf);
@@ -35,9 +38,9 @@ export class TimerView extends ItemView {
     this.timeEl = c.createEl("div", { cls: "dp-time", text: "00:00" });
 
     const row = c.createDiv({ cls: "dp-row" });
-    row.createSpan({ text: "Работа (мин): " });
+    row.createSpan({ text: "Работа" });
     this.workInput = row.createEl("input", { type: "number", value: String(this.plugin.settings.workMinutes), attr: { min: "1" } });
-    row.createSpan({ text: " Перерыв (мин): " });
+    row.createSpan({ text: "Перерыв" });
     this.breakInput = row.createEl("input", { type: "number", value: String(this.plugin.settings.breakMinutes), attr: { min: "0" } });
 
     this.workInput.addEventListener("change", () => this.applyDurations());
@@ -45,13 +48,13 @@ export class TimerView extends ItemView {
 
     const btns = c.createDiv({ cls: "dp-row" });
     this.startBtn = btns.createEl("button", { text: "Старт", cls: "dp-primary" });
-    const pauseBtn = btns.createEl("button", { text: "Пауза" });
-    const stopBtn = btns.createEl("button", { text: "Стоп" });
-    const skipBtn = btns.createEl("button", { text: "Пропустить" });
+    this.pauseBtn = btns.createEl("button", { text: "Пауза" });
+    this.stopBtn = btns.createEl("button", { text: "Стоп" });
+    this.skipBtn = btns.createEl("button", { text: "Пропустить" });
     this.startBtn.addEventListener("click", () => this.plugin.timer.start());
-    pauseBtn.addEventListener("click", () => this.plugin.timer.pause());
-    stopBtn.addEventListener("click", () => this.plugin.timer.stop());
-    skipBtn.addEventListener("click", () => this.plugin.timer.skip());
+    this.pauseBtn.addEventListener("click", () => this.plugin.timer.pause());
+    this.stopBtn.addEventListener("click", () => this.plugin.timer.stop());
+    this.skipBtn.addEventListener("click", () => this.plugin.timer.skip());
 
     this.render();
   }
@@ -64,7 +67,12 @@ export class TimerView extends ItemView {
     const editable = t.state === "stopped";
     this.workInput.disabled = !editable;
     this.breakInput.disabled = !editable;
+    // Кнопки по состоянию: пауза/стоп — только после запуска, «Пропустить» — в перерыве.
     this.startBtn.setText(t.state === "paused" ? "Продолжить" : "Старт");
+    this.startBtn.style.display = t.state === "running" ? "none" : "";
+    this.pauseBtn.style.display = t.state === "running" ? "" : "none";
+    this.stopBtn.style.display = t.state === "stopped" ? "none" : "";
+    this.skipBtn.style.display = t.mode === "break" ? "" : "none";
   }
 
   private applyDurations() {

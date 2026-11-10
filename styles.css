@@ -1,24 +1,37 @@
 .dp-timer-view {
-  padding: 8px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  text-align: center;
 }
 .dp-timer-view .dp-mode {
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  font-size: 0.95em;
 }
 .dp-timer-view .dp-time {
-  font-size: 2.2em;
+  font-size: 1.7em;
   font-variant-numeric: tabular-nums;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  line-height: 1.1;
 }
 .dp-timer-view .dp-row {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   flex-wrap: wrap;
+  justify-content: center;
+}
+.dp-timer-view .dp-row span {
+  font-size: 0.9em;
 }
 .dp-timer-view input[type="number"] {
-  width: 52px;
+  width: 46px;
+  font-size: 0.9em;
 }
 .dp-timer-view button {
   margin-right: 4px;
@@ -55,4 +68,20 @@
 }
 .dp-total {
   font-weight: 700;
+}
+.dp-capture-hint {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  margin-bottom: 6px;
+}
+.dp-capture-preview {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s, 4px);
+  font-family: var(--font-monospace);
+  font-size: 0.9em;
+  white-space: pre-wrap;
+  word-break: break-word;
 }

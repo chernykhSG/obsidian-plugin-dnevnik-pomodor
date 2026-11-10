@@ -153,7 +153,7 @@ export default class DnevnikPomodoro extends Plugin {
   }
 
   private async openCapture(actualStart: Date) {
-    const modal = new CaptureModal(this.app, this);
+    const modal = new CaptureModal(this.app, this, actualStart);
     const lines = await modal.openAndWait();
     let wrote = false;
     if (lines && lines.length) {
