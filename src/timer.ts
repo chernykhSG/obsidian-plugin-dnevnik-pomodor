@@ -1,0 +1,106 @@
+import { pad2 } from "./core";
+
+export type TimerMode = "work" | "break";
+export type TimerState = "stopped" | "running" | "paused";
+
+export interface TimerCallbacks {
+  onWorkFinished: () => void;
+  onTick: () => void;
+}
+
+export class PomodoroTimer {
+  mode: TimerMode = "work";
+  state: TimerState = "stopped";
+  workMinutes = 30;
+  breakMinutes = 5;
+  private durationSec = 30 * 60;
+  private remainingMs = 30 * 60 * 1000;
+  private startedAt = 0;
+  private interval: number | null = null;
+  private cb: TimerCallbacks;
+
+  constructor(cb: TimerCallbacks) {
+    this.cb = cb;
+  }
+
+  // Изменить длительности можно только в состоянии «остановлен».
+  setDurations(work: number, br: number) {
+    if (this.state !== "stopped") return;
+    this.workMinutes = Math.max(1, work);
+    this.breakMinutes = Math.max(0, br);
+    this.durationSec = (this.mode === "work" ? this.workMinutes : this.breakMinutes) * 60;
+    this.remainingMs = this.durationSec * 1000;
+    this.cb.onTick();
+  }
+
+  start() {
+    if (this.state === "running") return;
+    if (this.state === "stopped") {
+      this.durationSec = (this.mode === "work" ? this.workMinutes : this.breakMinutes) * 60;
+      this.remainingMs = this.durationSec * 1000;
+      this.startedAt = Date.now();
+    }
+    this.state = "running";
+    this.interval = window.setInterval(() => this.tick(), 500);
+    this.cb.onTick();
+  }
+
+  pause() {
+    if (this.state !== "running") return;
+    this.state = "paused";
+    if (this.interval !== null) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
+    this.cb.onTick();
+  }
+
+  stop() {
+    if (this.interval !== null) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
+    this.state = "stopped";
+    this.remainingMs = this.durationSec * 1000;
+    this.cb.onTick();
+  }
+
+  // Момент запуска текущего рабочего интервала (настенные часы).
+  get wallStart(): Date {
+    return new Date(this.startedAt);
+  }
+
+  formatRemaining(): string {
+    const total = Math.max(0, Math.round(this.remainingMs / 1000));
+    const mm = Math.floor(total / 60);
+    const ss = total % 60;
+    return pad2(mm) + ":" + pad2(ss);
+  }
+
+  private tick() {
+    if (this.state !== "running") return;
+    const elapsed = Date.now() - this.startedAt;
+    this.remainingMs = this.durationSec * 1000 - elapsed;
+    if (this.remainingMs <= 0) {
+      this.remainingMs = 0;
+      this.finish();
+    }
+    this.cb.onTick();
+  }
+
+  private finish() {
+    if (this.interval !== null) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
+    this.state = "stopped";
+    this.remainingMs = this.durationSec * 1000;
+    if (this.mode === "work") {
+      this.mode = "break";
+      this.cb.onWorkFinished();
+    } else {
+      this.mode = "work";
+    }
+    this.cb.onTick();
+  }
+}
