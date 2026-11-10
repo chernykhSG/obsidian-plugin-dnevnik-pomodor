@@ -32,8 +32,10 @@ export class ConfirmModal extends Modal {
   }
 
   private answer(yes: boolean) {
+    if (!this.resolveFn) return; // уже отвечено (кнопкой или закрытием)
     const fn = this.resolveFn;
     this.resolveFn = undefined;
     fn?.(yes);
+    this.close(); // без этого окно висит открытым после клика по кнопке
   }
 }
