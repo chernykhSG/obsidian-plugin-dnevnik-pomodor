@@ -18,7 +18,7 @@ export const DEFAULT_SETTINGS: DnevnikSettings = {
   workMinutes: 30,
   breakMinutes: 5,
   sound: true,
-  soundType: "short",
+  soundType: "chime",
   notification: true,
   focusOnFinish: true,
   autoBreak: true,
@@ -75,7 +75,7 @@ export class DnevnikSettingTab extends PluginSettingTab {
         d
           .addOption("short", "Короткий")
           .addOption("long", "Продолжительный")
-          .addOption("chime", "Мелодия (восходящая)")
+          .addOption("chime", "Мелодия")
           .addOption("dingdong", "Динь-дон")
           .addOption("alarm", "Сирена")
           .setValue(this.plugin.settings.soundType)

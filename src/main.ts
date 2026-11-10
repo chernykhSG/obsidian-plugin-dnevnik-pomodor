@@ -89,8 +89,8 @@ export default class DnevnikPomodoro extends Plugin {
       const ctx = this.audioCtx;
       switch (this.settings.soundType) {
         case "chime":
-          // Восходящий аккорд: C5, E5, G5 (мягкая синусоида).
-          this.tone(ctx, [523.25, 659.25, 783.99], 0.35, "sine", 0.12);
+          // Мелодия: лёгкая восходяще-нисходящая фраза в до-мажоре.
+          this.melody(ctx);
           break;
         case "dingdong":
           // Динь-дон: два низких тона с долгим затуханием.
@@ -134,6 +134,22 @@ export default class DnevnikPomodoro extends Plugin {
   // Последовательность тонов с интервалом gap секунд.
   private tone(ctx: AudioContext, freqs: number[], gap: number, type: OscillatorType, volume: number) {
     freqs.forEach((f, i) => this.beep(ctx, i * gap * 1000, f, gap * 0.7, volume, type));
+  }
+
+  // Мелодия: восходяще-нисходящая фраза в до-мажоре (C5-E5-G5-E5-C5), синусоида.
+  private melody(ctx: AudioContext) {
+    const notes: [number, number][] = [
+      [523.25, 0.4], // C5
+      [659.25, 0.4], // E5
+      [783.99, 0.4], // G5
+      [659.25, 0.4], // E5
+      [523.25, 0.7], // C5 (дольше, финал)
+    ];
+    let t = 0;
+    for (const [f, d] of notes) {
+      this.beep(ctx, t * 1000, f, d, 0.12, "sine");
+      t += d + 0.1;
+    }
   }
 
   private async openCapture(actualStart: Date) {
