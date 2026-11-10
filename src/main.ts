@@ -2,6 +2,7 @@ import { Notice, Plugin } from "obsidian";
 import { DnevnikSettings, DEFAULT_SETTINGS, DnevnikSettingTab } from "./settings";
 import { PomodoroTimer } from "./timer";
 import { CaptureModal } from "./capture-modal";
+import { ConfirmModal } from "./confirm-modal";
 import { StatsModal } from "./stats-modal";
 import { TIMER_VIEW_TYPE, TimerView } from "./timer-view";
 import { appendPomodoroBlock } from "./daily";
@@ -18,6 +19,7 @@ export default class DnevnikPomodoro extends Plugin {
     await this.loadSettings();
     this.timer = new PomodoroTimer({
       onWorkFinished: () => this.handleWorkFinished(),
+      onBreakFinished: () => this.handleBreakFinished(),
       onTick: () => this.updateTimerUI(),
     });
     this.timer.setDurations(this.settings.workMinutes, this.settings.breakMinutes);
@@ -97,6 +99,22 @@ export default class DnevnikPomodoro extends Plugin {
     await leaf.setViewState({ type: TIMER_VIEW_TYPE, active: true });
     this.app.workspace.revealLeaf(leaf);
     // Ссылку на view не ищем вручную: TimerView регистрирует себя в onOpen.
+  }
+
+  // Перерыв закончился: теми же сигналами, что и конец помидоры (звук,
+  // фокус окна, уведомление), спрашиваем — начинать новый помидоро?
+  private async handleBreakFinished() {
+    if (this.settings.sound) this.playBeep();
+    if (this.settings.focusOnFinish) this.focusObsidianWindow();
+    if (this.settings.notification) {
+      try {
+        new Notification("Перерыв завершён", { body: "Начать новый помидоро?" });
+      } catch (e) {
+        // уведомления недоступны — не критично
+      }
+    }
+    const yes = await new ConfirmModal(this.app, "☕ Перерыв завершён. Начать новый помидоро?", "Начать", "Не сейчас").openAndWait();
+    if (yes && this.timer.state === "stopped") this.timer.start();
   }
 
   private async handleWorkFinished() {

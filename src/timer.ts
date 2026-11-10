@@ -6,6 +6,7 @@ export type TimerState = "stopped" | "running" | "paused";
 
 export interface TimerCallbacks {
   onWorkFinished: () => void;
+  onBreakFinished: () => void;
   onTick: () => void;
 }
 
@@ -124,6 +125,7 @@ export class PomodoroTimer {
       this.cb.onWorkFinished();
     } else {
       this.mode = "work";
+      this.cb.onBreakFinished();
     }
     this.durationSec = (this.mode === "work" ? this.workMinutes : this.breakMinutes) * 60;
     this.remainingMs = this.durationSec * 1000;
