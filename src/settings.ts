@@ -38,7 +38,8 @@ export class DnevnikSettingTab extends PluginSettingTab {
       .setName("Длительность работы (мин)")
       .addText((t) =>
         t.setValue(String(this.plugin.settings.workMinutes)).onChange(async (v) => {
-          this.plugin.settings.workMinutes = Math.max(1, parseInt(v) || 30);
+          const parsed = parseInt(v, 10);
+          this.plugin.settings.workMinutes = Number.isNaN(parsed) ? 30 : Math.max(1, parsed);
           await this.plugin.saveSettings();
           this.plugin.timer.setDurations(this.plugin.settings.workMinutes, this.plugin.settings.breakMinutes);
         })
@@ -48,7 +49,8 @@ export class DnevnikSettingTab extends PluginSettingTab {
       .setName("Длительность перерыва (мин)")
       .addText((t) =>
         t.setValue(String(this.plugin.settings.breakMinutes)).onChange(async (v) => {
-          this.plugin.settings.breakMinutes = Math.max(0, parseInt(v) || 5);
+          const parsed = parseInt(v, 10);
+          this.plugin.settings.breakMinutes = Number.isNaN(parsed) ? 5 : Math.max(0, parsed);
           await this.plugin.saveSettings();
           this.plugin.timer.setDurations(this.plugin.settings.workMinutes, this.plugin.settings.breakMinutes);
         })
