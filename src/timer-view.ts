@@ -30,6 +30,10 @@ export class TimerView extends ItemView {
   }
 
   async onOpen() {
+    // Регистрируем себя в плагине: view может быть создано фабрикой registerView
+    // (восстановление workspace, reload плагина), когда toggleTimerView не вызывается.
+    // Без этого updateTimerUI не найдёт view и панель не будет обновляться.
+    this.plugin.timerView = this;
     const c = this.containerEl.children[1] as HTMLElement;
     c.empty();
     c.addClass("dp-timer-view");
@@ -57,6 +61,11 @@ export class TimerView extends ItemView {
     this.skipBtn.addEventListener("click", () => this.plugin.timer.skip());
 
     this.render();
+  }
+
+  async onClose() {
+    // Сбрасываем ссылку, иначе плагин будет рендерить в отсоединённый view.
+    if (this.plugin.timerView === this) this.plugin.timerView = null;
   }
 
   render() {

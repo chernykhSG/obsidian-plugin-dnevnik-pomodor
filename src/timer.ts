@@ -1,4 +1,5 @@
 import { pad2 } from "./core";
+import { createUnthrottledInterval } from "./worker-timer";
 
 export type TimerMode = "work" | "break";
 export type TimerState = "stopped" | "running" | "paused";
@@ -18,7 +19,7 @@ export class PomodoroTimer {
   private startedAt = 0;
   private segmentStart = 0;
   private segmentRemainingMs = 30 * 60 * 1000;
-  private interval: number | null = null;
+  private stopInterval: (() => void) | null = null;
   private cb: TimerCallbacks;
 
   constructor(cb: TimerCallbacks) {
@@ -50,7 +51,7 @@ export class PomodoroTimer {
       this.segmentRemainingMs = this.remainingMs;
     }
     this.state = "running";
-    this.interval = window.setInterval(() => this.tick(), 500);
+    this.stopInterval = createUnthrottledInterval(() => this.tick(), 500);
     this.cb.onTick();
   }
 
@@ -58,17 +59,17 @@ export class PomodoroTimer {
     if (this.state !== "running") return;
     this.remainingMs = Math.max(0, this.segmentRemainingMs - (Date.now() - this.segmentStart));
     this.state = "paused";
-    if (this.interval !== null) {
-      clearInterval(this.interval);
-      this.interval = null;
+    if (this.stopInterval !== null) {
+      this.stopInterval();
+      this.stopInterval = null;
     }
     this.cb.onTick();
   }
 
   stop() {
-    if (this.interval !== null) {
-      clearInterval(this.interval);
-      this.interval = null;
+    if (this.stopInterval !== null) {
+      this.stopInterval();
+      this.stopInterval = null;
     }
     this.state = "stopped";
     this.remainingMs = this.durationSec * 1000;
@@ -78,9 +79,9 @@ export class PomodoroTimer {
   // Пропустить текущий интервал: сразу перейти к следующему режиму
   // (работа <-> перерыв) без запуска и без вызова onWorkFinished.
   skip() {
-    if (this.interval !== null) {
-      clearInterval(this.interval);
-      this.interval = null;
+    if (this.stopInterval !== null) {
+      this.stopInterval();
+      this.stopInterval = null;
     }
     this.state = "stopped";
     this.mode = this.mode === "work" ? "break" : "work";
@@ -113,9 +114,9 @@ export class PomodoroTimer {
   }
 
   private finish() {
-    if (this.interval !== null) {
-      clearInterval(this.interval);
-      this.interval = null;
+    if (this.stopInterval !== null) {
+      this.stopInterval();
+      this.stopInterval = null;
     }
     this.state = "stopped";
     if (this.mode === "work") {

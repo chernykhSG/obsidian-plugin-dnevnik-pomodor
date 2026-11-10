@@ -48,6 +48,43 @@ export default class DnevnikPomodoro extends Plugin {
     await this.saveData(this.settings);
   }
 
+  // Поднимает окно Obsidian на передний план. window.focus() в Electron (macOS)
+  // не активирует приложение, если оно в фоне — нужен BrowserWindow.show()
+  // и app.focus({steal:true}): macOS по умолчанию запрещает фоновому приложению
+  // перехватывать фокус. Obsidian выставляет глобальные window.electronWindow
+  // и window.electron.remote (проверено по obsidian.asar); на мобильных их нет —
+  // fallback на window.focus().
+  private focusObsidianWindow() {
+    try {
+      type Win = { isMinimized?: () => boolean; restore?: () => void; show: () => void; focus: () => void };
+      const w = window as unknown as {
+        electronWindow?: Win;
+        electron?: {
+          remote?: {
+            app?: { focus?: (opts?: { steal?: boolean }) => void };
+            getCurrentWindow?: () => Win;
+          };
+        };
+      };
+      const remote = w.electron?.remote;
+      const win = w.electronWindow ?? remote?.getCurrentWindow?.();
+      if (win) {
+        remote?.app?.focus?.({ steal: true }); // активировать приложение macOS
+        if (win.isMinimized?.()) win.restore?.();
+        win.show();
+        win.focus();
+        return;
+      }
+    } catch (e) {
+      // Electron API недоступен — не критично, пробуем фолбэк ниже.
+    }
+    try {
+      window.focus();
+    } catch (e) {
+      // фокус недоступен — не критично
+    }
+  }
+
   private async toggleTimerView() {
     const existing = this.app.workspace.getLeavesOfType(TIMER_VIEW_TYPE);
     if (existing.length) {
@@ -59,19 +96,14 @@ export default class DnevnikPomodoro extends Plugin {
     if (!leaf) return;
     await leaf.setViewState({ type: TIMER_VIEW_TYPE, active: true });
     this.app.workspace.revealLeaf(leaf);
-    const leaves = this.app.workspace.getLeavesOfType(TIMER_VIEW_TYPE);
-    this.timerView = leaves.length ? (leaves[0].view as TimerView) : null;
+    // Ссылку на view не ищем вручную: TimerView регистрирует себя в onOpen.
   }
 
   private async handleWorkFinished() {
     this.workJustFinished = true;
     if (this.settings.sound) this.playBeep();
     if (this.settings.focusOnFinish) {
-      try {
-        window.focus();
-      } catch (e) {
-        // фокус недоступен — не критично
-      }
+      this.focusObsidianWindow();
     }
     if (this.settings.notification) {
       try {
