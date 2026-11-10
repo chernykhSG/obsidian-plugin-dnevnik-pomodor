@@ -16,6 +16,8 @@ export class PomodoroTimer {
   private durationSec = 30 * 60;
   private remainingMs = 30 * 60 * 1000;
   private startedAt = 0;
+  private segmentStart = 0;
+  private segmentRemainingMs = 30 * 60 * 1000;
   private interval: number | null = null;
   private cb: TimerCallbacks;
 
@@ -39,6 +41,12 @@ export class PomodoroTimer {
       this.durationSec = (this.mode === "work" ? this.workMinutes : this.breakMinutes) * 60;
       this.remainingMs = this.durationSec * 1000;
       this.startedAt = Date.now();
+      this.segmentStart = Date.now();
+      this.segmentRemainingMs = this.remainingMs;
+    } else {
+      // resume from paused
+      this.segmentStart = Date.now();
+      this.segmentRemainingMs = this.remainingMs;
     }
     this.state = "running";
     this.interval = window.setInterval(() => this.tick(), 500);
@@ -47,6 +55,7 @@ export class PomodoroTimer {
 
   pause() {
     if (this.state !== "running") return;
+    this.remainingMs = Math.max(0, this.segmentRemainingMs - (Date.now() - this.segmentStart));
     this.state = "paused";
     if (this.interval !== null) {
       clearInterval(this.interval);
@@ -79,11 +88,11 @@ export class PomodoroTimer {
 
   private tick() {
     if (this.state !== "running") return;
-    const elapsed = Date.now() - this.startedAt;
-    this.remainingMs = this.durationSec * 1000 - elapsed;
+    this.remainingMs = this.segmentRemainingMs - (Date.now() - this.segmentStart);
     if (this.remainingMs <= 0) {
       this.remainingMs = 0;
       this.finish();
+      return;
     }
     this.cb.onTick();
   }
