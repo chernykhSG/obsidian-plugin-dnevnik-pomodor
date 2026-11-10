@@ -13,6 +13,7 @@ export async function appendPomodoroBlock(plugin: DnevnikPomodoro, actualStart: 
 
   let file = plugin.app.vault.getAbstractFileByPath(path) as TFile | null;
   if (!file) {
+    await ensureFolder(plugin, settings.dailyFolder);
     file = await createDailyNote(plugin, path);
   }
 
@@ -39,4 +40,19 @@ async function createDailyNote(plugin: DnevnikPomodoro, path: string): Promise<T
     }
   }
   return plugin.app.vault.create(path, template);
+}
+
+// Создаёт папку (и вложенные папки) ежедневных заметок, если она ещё не существует.
+async function ensureFolder(plugin: DnevnikPomodoro, folder: string): Promise<void> {
+  const { vault } = plugin.app;
+  const normalized = folder.replace(/^\/+|\/+$/g, "");
+  if (!normalized || vault.getFolderByPath(normalized)) return;
+  const parts = normalized.split("/");
+  let cur = "";
+  for (const p of parts) {
+    cur = cur ? `${cur}/${p}` : p;
+    if (!vault.getFolderByPath(cur)) {
+      await vault.createFolder(cur);
+    }
+  }
 }
