@@ -65,7 +65,13 @@ export default class DnevnikPomodoro extends Plugin {
   // fallback на window.focus().
   private focusObsidianWindow() {
     try {
-      type Win = { isMinimized?: () => boolean; restore?: () => void; show: () => void; focus: () => void };
+      type Win = {
+        isMinimized?: () => boolean;
+        restore?: () => void;
+        show: () => void;
+        focus: () => void;
+        setVisibleOnAllWorkspaces?: (v: boolean, o?: { visibleOnFullScreen?: boolean }) => void;
+      };
       const w = window as unknown as {
         electronWindow?: Win;
         electron?: {
@@ -80,8 +86,13 @@ export default class DnevnikPomodoro extends Plugin {
       if (win) {
         remote?.app?.focus?.({ steal: true }); // активировать приложение macOS
         if (win.isMinimized?.()) win.restore?.();
+        // Окно может быть на другом рабочем столе (Space): activate/focus не
+        // всегда переключают Space. Приём из Electron-issues — на миг показать
+        // окно на всех Space, тогда оно проявляется на активном столе.
+        win.setVisibleOnAllWorkspaces?.(true, { visibleOnFullScreen: false });
         win.show();
         win.focus();
+        win.setVisibleOnAllWorkspaces?.(false);
         return;
       }
     } catch (e) {
