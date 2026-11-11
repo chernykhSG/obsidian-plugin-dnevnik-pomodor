@@ -3,6 +3,7 @@ import { DnevnikSettings, DEFAULT_SETTINGS, DnevnikSettingTab } from "./settings
 import { PomodoroTimer } from "./timer";
 import { CaptureModal } from "./capture-modal";
 import { ConfirmModal } from "./confirm-modal";
+import { Snoozer } from "./snoozer";
 import { StatsModal } from "./stats-modal";
 import { TIMER_VIEW_TYPE, TimerView } from "./timer-view";
 import { appendPomodoroBlock } from "./daily";
@@ -10,6 +11,7 @@ import { appendPomodoroBlock } from "./daily";
 export default class DnevnikPomodoro extends Plugin {
   settings: DnevnikSettings = DEFAULT_SETTINGS;
   timer!: PomodoroTimer;
+  snoozer!: Snoozer;
   timerView: TimerView | null = null;
   private audioCtx: AudioContext | null = null;
   private statusBarEl: HTMLElement | null = null;
@@ -23,6 +25,10 @@ export default class DnevnikPomodoro extends Plugin {
       onTick: () => this.updateTimerUI(),
     });
     this.timer.setDurations(this.settings.workMinutes, this.settings.breakMinutes);
+    this.snoozer = new Snoozer({
+      onWake: () => this.handleSnoozeWake(),
+      onTick: () => this.updateTimerUI(),
+    });
 
     this.registerView(TIMER_VIEW_TYPE, (leaf) => new TimerView(leaf, this));
     this.addRibbonIcon("timer", "Помодоро", () => this.toggleTimerView());
@@ -39,6 +45,7 @@ export default class DnevnikPomodoro extends Plugin {
 
   onunload() {
     this.timer?.stop();
+    this.snoozer?.cancel();
     this.audioCtx?.close();
   }
 
@@ -102,8 +109,20 @@ export default class DnevnikPomodoro extends Plugin {
   }
 
   // Перерыв закончился: теми же сигналами, что и конец помидоры (звук,
-  // фокус окна, уведомление), спрашиваем — начинать новый помидоро?
-  private async handleBreakFinished() {
+  // фокус окна, уведомление), спрашиваем — начинать новый помодоро?
+  private handleBreakFinished() {
+    this.askPomodoro();
+  }
+
+  // Отсрочка истекла. Если пользователь уже сам что-то сделал с таймером
+  // (запустил работу / сменил режим) — тихо ничего не спрашиваем.
+  private handleSnoozeWake() {
+    if (this.timer.state === "stopped" && this.timer.mode === "work") {
+      this.askPomodoro();
+    }
+  }
+
+  private async askPomodoro() {
     if (this.settings.sound) this.playBeep();
     if (this.settings.focusOnFinish) this.focusObsidianWindow();
     if (this.settings.notification) {
@@ -113,8 +132,18 @@ export default class DnevnikPomodoro extends Plugin {
         // уведомления недоступны — не критично
       }
     }
-    const yes = await new ConfirmModal(this.app, "☕ Перерыв завершён. Начать новый помидоро?", "Начать", "Не сейчас").openAndWait();
-    if (yes && this.timer.state === "stopped") this.timer.start();
+    const r = await new ConfirmModal(
+      this.app,
+      "☕ Перерыв завершён. Начать новый помидоро?",
+      "Начать",
+      "Не сейчас",
+      { label: "Отложить на", defaultMinutes: 10 }
+    ).openAndWait();
+    if (r === "yes") {
+      if (this.timer.state === "stopped") this.timer.start();
+    } else if (typeof r === "number") {
+      this.snoozer.start(r);
+    }
   }
 
   private async handleWorkFinished() {
@@ -229,8 +258,15 @@ export default class DnevnikPomodoro extends Plugin {
 
   private updateTimerUI() {
     if (!this.statusBarEl) this.statusBarEl = this.addStatusBarItem();
-    const label = this.timer.mode === "work" ? "🍅" : "☕";
-    this.statusBarEl.setText(`${label} ${this.timer.formatRemaining()}`);
+    // Отсрочка видна только пока таймер стоит: если работа уже запущена,
+    // показываем её, а не обратный отсчёт отсрочки.
+    const snoozed = this.snoozer && this.snoozer.active && this.timer.state === "stopped";
+    if (snoozed) {
+      this.statusBarEl.setText(`⏳ ${this.snoozer.formatRemaining()}`);
+    } else {
+      const label = this.timer.mode === "work" ? "🍅" : "☕";
+      this.statusBarEl.setText(`${label} ${this.timer.formatRemaining()}`);
+    }
     if (this.timerView) this.timerView.render();
   }
 }

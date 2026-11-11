@@ -14,6 +14,7 @@ export class TimerView extends ItemView {
   private pauseBtn!: HTMLButtonElement;
   private stopBtn!: HTMLButtonElement;
   private skipBtn!: HTMLButtonElement;
+  private cancelSnoozeBtn!: HTMLButtonElement;
 
   constructor(leaf: WorkspaceLeaf, plugin: DnevnikPomodoro) {
     super(leaf);
@@ -60,6 +61,8 @@ export class TimerView extends ItemView {
     this.pauseBtn.addEventListener("click", () => this.plugin.timer.pause());
     this.stopBtn.addEventListener("click", () => this.plugin.timer.stop());
     this.skipBtn.addEventListener("click", () => this.plugin.timer.skip());
+    this.cancelSnoozeBtn = btns.createEl("button", { text: "Отменить отсрочку" });
+    this.cancelSnoozeBtn.addEventListener("click", () => this.plugin.snoozer.cancel());
 
     const extra = c.createDiv({ cls: "dp-row" });
     const statsBtn = extra.createEl("button", { text: "📊 Статистика" });
@@ -75,8 +78,10 @@ export class TimerView extends ItemView {
 
   render() {
     const t = this.plugin.timer;
-    this.modeEl.setText(t.mode === "work" ? "🍅 Работа" : "☕ Перерыв");
-    this.timeEl.setText(t.formatRemaining());
+    // Отсрочка показывается вместо таймера, пока он остановлен.
+    const snoozed = this.plugin.snoozer && this.plugin.snoozer.active && t.state === "stopped";
+    this.modeEl.setText(snoozed ? "⏳ Помидоро отложен" : t.mode === "work" ? "🍅 Работа" : "☕ Перерыв");
+    this.timeEl.setText(snoozed ? this.plugin.snoozer.formatRemaining() : t.formatRemaining());
     // Поля длительностей редактируются только в состоянии «остановлен».
     const editable = t.state === "stopped";
     this.workInput.disabled = !editable;
@@ -86,7 +91,9 @@ export class TimerView extends ItemView {
     this.startBtn.style.display = t.state === "running" ? "none" : "";
     this.pauseBtn.style.display = t.state === "running" ? "" : "none";
     this.stopBtn.style.display = t.state === "stopped" ? "none" : "";
-    this.skipBtn.style.display = t.mode === "break" ? "" : "none";
+    this.skipBtn.style.display = t.mode === "break" && !snoozed ? "" : "none";
+    // Отсрочка: «Старт» доступен (запуск отменит вопрос будильником), плюс отмена.
+    this.cancelSnoozeBtn.style.display = snoozed ? "" : "none";
   }
 
   private applyDurations() {
