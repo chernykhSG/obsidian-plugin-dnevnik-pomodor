@@ -12,7 +12,6 @@ export class TimerView extends ItemView {
   private breakInput!: HTMLInputElement;
   private startBtn!: HTMLButtonElement;
   private pauseBtn!: HTMLButtonElement;
-  private stopBtn!: HTMLButtonElement;
   private skipBtn!: HTMLButtonElement;
   private cancelSnoozeBtn!: HTMLButtonElement;
 
@@ -55,11 +54,9 @@ export class TimerView extends ItemView {
     const btns = c.createDiv({ cls: "dp-row" });
     this.startBtn = btns.createEl("button", { text: "Старт", cls: "dp-primary" });
     this.pauseBtn = btns.createEl("button", { text: "Пауза" });
-    this.stopBtn = btns.createEl("button", { text: "Стоп" });
     this.skipBtn = btns.createEl("button", { text: "Пропустить" });
     this.startBtn.addEventListener("click", () => this.plugin.timer.start());
     this.pauseBtn.addEventListener("click", () => this.plugin.timer.pause());
-    this.stopBtn.addEventListener("click", () => this.plugin.timer.stop());
     this.skipBtn.addEventListener("click", () => this.plugin.timer.skip());
     this.cancelSnoozeBtn = btns.createEl("button", { text: "Отменить отсрочку" });
     this.cancelSnoozeBtn.addEventListener("click", () => this.plugin.snoozer.cancel());
@@ -88,12 +85,12 @@ export class TimerView extends ItemView {
     const editable = t.state === "stopped";
     this.workInput.disabled = !editable;
     this.breakInput.disabled = !editable;
-    // Кнопки по состоянию: пауза/стоп — только после запуска, «Пропустить» — в перерыве.
+    // Кнопки по состоянию: пауза — только во время работы, «Пропустить» —
+    // переход работа ↔ перерыв (в отсрочке не нужен).
     this.startBtn.setText(t.state === "paused" ? "Продолжить" : "Старт");
     this.startBtn.style.display = t.state === "running" ? "none" : "";
     this.pauseBtn.style.display = t.state === "running" ? "" : "none";
-    this.stopBtn.style.display = t.state === "stopped" ? "none" : "";
-    this.skipBtn.style.display = t.mode === "break" && !snoozed ? "" : "none";
+    this.skipBtn.style.display = snoozed ? "none" : "";
     // Отсрочка: «Старт» доступен (запуск отменит вопрос будильником), плюс отмена.
     this.cancelSnoozeBtn.style.display = snoozed ? "" : "none";
   }

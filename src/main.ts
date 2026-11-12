@@ -37,7 +37,6 @@ export default class DnevnikPomodoro extends Plugin {
     this.addCommand({ id: "stats", name: "Открыть статистику", callback: () => new StatsModal(this.app, this).open() });
     this.addCommand({ id: "timer-start", name: "Таймер: старт", callback: () => this.timer.start() });
     this.addCommand({ id: "timer-pause", name: "Таймер: пауза", callback: () => this.timer.pause() });
-    this.addCommand({ id: "timer-stop", name: "Таймер: стоп", callback: () => this.timer.stop() });
 
     this.addSettingTab(new DnevnikSettingTab(this.app, this));
     this.updateTimerUI();
