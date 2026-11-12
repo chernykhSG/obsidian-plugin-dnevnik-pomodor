@@ -65,6 +65,8 @@ export class TimerView extends ItemView {
     this.cancelSnoozeBtn.addEventListener("click", () => this.plugin.snoozer.cancel());
 
     const extra = c.createDiv({ cls: "dp-row" });
+    const noteBtn = extra.createEl("button", { text: "📝 Заметка" });
+    noteBtn.addEventListener("click", () => this.plugin.captureNow());
     const statsBtn = extra.createEl("button", { text: "📊 Статистика" });
     statsBtn.addEventListener("click", () => new StatsModal(this.plugin.app, this.plugin).open());
 

@@ -33,7 +33,7 @@ export default class DnevnikPomodoro extends Plugin {
     this.registerView(TIMER_VIEW_TYPE, (leaf) => new TimerView(leaf, this));
     this.addRibbonIcon("timer", "Помодоро", () => this.toggleTimerView());
     this.addCommand({ id: "open-timer", name: "Открыть таймер", callback: () => this.toggleTimerView() });
-    this.addCommand({ id: "capture", name: "Открыть сводку помодоро", callback: () => this.openCapture(new Date()) });
+    this.addCommand({ id: "capture", name: "Зафиксировать заметку", callback: () => this.captureNow() });
     this.addCommand({ id: "stats", name: "Открыть статистику", callback: () => new StatsModal(this.app, this).open() });
     this.addCommand({ id: "timer-start", name: "Таймер: старт", callback: () => this.timer.start() });
     this.addCommand({ id: "timer-pause", name: "Таймер: пауза", callback: () => this.timer.pause() });
@@ -240,6 +240,14 @@ export default class DnevnikPomodoro extends Plugin {
       this.beep(ctx, t * 1000, f, d, 0.12, "sine");
       t += d + 0.1;
     }
+  }
+
+  // Заметка по ходу помидоры: то же окно и тот же формат блока 🍅, что и при
+  // завершении, но пишется сразу. Старт блока — начало текущей помидоры;
+  // computeStartTime сам сдвинет его за конец последнего блока (без наложений).
+  captureNow() {
+    const wallStart = this.timer.wallStart;
+    this.openCapture(wallStart.getTime() > 0 ? wallStart : new Date());
   }
 
   private async openCapture(actualStart: Date) {
