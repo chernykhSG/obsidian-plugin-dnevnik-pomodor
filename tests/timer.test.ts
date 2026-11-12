@@ -45,3 +45,24 @@ test("конец работы: вызывается onWorkFinished, onBreakFinis
   assert.equal(timer.mode, "break");
   assert.equal(timer.state, "stopped");
 });
+
+test("стоп в перерыве: отмена перерыва, возврат к работе с полной длительностью", () => {
+  const { timer } = makeTimer();
+  timer.setDurations(30, 5);
+  timer.mode = "break";
+  timer.start();
+  timer.stop();
+  assert.equal(timer.mode, "work");
+  assert.equal(timer.state, "stopped");
+  assert.equal(timer.formatRemaining(), "30:00");
+});
+
+test("стоп в работе: режим работы, полная длительность", () => {
+  const { timer } = makeTimer();
+  timer.setDurations(30, 5);
+  timer.start();
+  timer.stop();
+  assert.equal(timer.mode, "work");
+  assert.equal(timer.state, "stopped");
+  assert.equal(timer.formatRemaining(), "30:00");
+});

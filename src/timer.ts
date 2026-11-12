@@ -73,6 +73,9 @@ export class PomodoroTimer {
       this.stopInterval = null;
     }
     this.state = "stopped";
+    // Стоп в перерыве = отмена перерыва и возврат к старту помидоро.
+    if (this.mode === "break") this.mode = "work";
+    this.durationSec = (this.mode === "work" ? this.workMinutes : this.breakMinutes) * 60;
     this.remainingMs = this.durationSec * 1000;
     this.cb.onTick();
   }
