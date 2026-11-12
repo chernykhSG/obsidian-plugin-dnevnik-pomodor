@@ -10,6 +10,19 @@ export interface TimerCallbacks {
   onTick: () => void;
 }
 
+// Автозапуск перерыва после конца помидоры: сводка записана или нет —
+// перерыв всё равно должен начаться. Не запускать, если авто-перерыв
+// выключен, работа не заканчивалась (ручное окно сводки) или таймер
+// уже в другом состоянии.
+export function shouldAutoBreak(
+  autoBreakSetting: boolean,
+  workJustFinished: boolean,
+  state: TimerState,
+  mode: TimerMode
+): boolean {
+  return autoBreakSetting && workJustFinished && state === "stopped" && mode === "break";
+}
+
 export class PomodoroTimer {
   mode: TimerMode = "work";
   state: TimerState = "stopped";

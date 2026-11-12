@@ -1,6 +1,6 @@
 import { Notice, Plugin } from "obsidian";
 import { DnevnikSettings, DEFAULT_SETTINGS, DnevnikSettingTab } from "./settings";
-import { PomodoroTimer } from "./timer";
+import { PomodoroTimer, shouldAutoBreak } from "./timer";
 import { CaptureModal } from "./capture-modal";
 import { ConfirmModal } from "./confirm-modal";
 import { Snoozer } from "./snoozer";
@@ -252,23 +252,15 @@ export default class DnevnikPomodoro extends Plugin {
   private async openCapture(actualStart: Date) {
     const modal = new CaptureModal(this.app, this, actualStart);
     const lines = await modal.openAndWait();
-    let wrote = false;
     if (lines && lines.length) {
       try {
         await appendPomodoroBlock(this, actualStart, lines);
         new Notice("Сводка записана");
-        wrote = true;
       } catch (e) {
         new Notice("Не удалось записать сводку: " + (e as Error).message);
       }
     }
-    if (
-      wrote &&
-      this.settings.autoBreak &&
-      this.workJustFinished &&
-      this.timer.state === "stopped" &&
-      this.timer.mode === "break"
-    ) {
+    if (shouldAutoBreak(this.settings.autoBreak, this.workJustFinished, this.timer.state, this.timer.mode)) {
       this.timer.start();
     }
     this.workJustFinished = false;

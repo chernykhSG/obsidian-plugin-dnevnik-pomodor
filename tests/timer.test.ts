@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { PomodoroTimer } from "../src/timer";
+import { PomodoroTimer, shouldAutoBreak } from "../src/timer";
 
 function makeTimer() {
   const calls = { work: 0, break: 0, tick: 0 };
@@ -65,4 +65,17 @@ test("стоп в работе: режим работы, полная длите
   assert.equal(timer.mode, "work");
   assert.equal(timer.state, "stopped");
   assert.equal(timer.formatRemaining(), "30:00");
+});
+
+test("автозапуск перерыва: и после записи сводки, и при отказе от неё", () => {
+  // закончилась работа, авто-перерыв включён, таймер стоит в режиме перерыва
+  assert.equal(shouldAutoBreak(true, true, "stopped", "break"), true);
+  // ручной вызов окна сводки (работа не заканчивалась) — не запускать
+  assert.equal(shouldAutoBreak(true, false, "stopped", "break"), false);
+  // авто-перерыв выключен в настройках
+  assert.equal(shouldAutoBreak(false, true, "stopped", "break"), false);
+  // пользователь уже сам что-то запустил
+  assert.equal(shouldAutoBreak(true, true, "running", "break"), false);
+  // режим уже не перерыв
+  assert.equal(shouldAutoBreak(true, true, "stopped", "work"), false);
 });
